@@ -7,17 +7,24 @@
 
 import angr
 
-# from IPython import embed # pop iPython at the end
+from IPython import embed # pop iPython at the end
 
 def main():
 	proj = angr.Project('crackme0x05', load_options={"auto_load_libs": False}) 
 
-	cfg = proj.analyses.CFG()
-	FIND_ADDR = cfg.kb.functions.function(name="exit").addr
-	AVOID_ADDR = 0x08048532 # dword [esp] = str.Password_Incorrect__n ; [0x8048679:4]=0x73736150 LEA str.Password_Incorrect__n ; "Password Incorrect!." @ 0x8048679
+	def correct(path):
+		try:
+			return 'Password OK' in path.state.posix.dumps(1)
+		except:
+			return False
+	def wrong(path):
+	 	try:
+	 		return 'Password Incorrect' in path.state.posix.dumps(1)
+	 	except:
+	 		return False
 
 	path_group = proj.factory.path_group()
-	path_group.explore(find=FIND_ADDR, avoid=AVOID_ADDR)
+	path_group.explore(find=correct, avoid=wrong)
 
 	# embed()
 	print path_group.found[0].state.posix.dumps(1) 
