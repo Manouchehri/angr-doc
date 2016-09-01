@@ -7,8 +7,6 @@
 
 import angr
 
-from IPython import embed # pop iPython at the end
-
 def main():
 	proj = angr.Project('crackme0x05', load_options={"auto_load_libs": False}) 
 
@@ -26,7 +24,6 @@ def main():
 	path_group = proj.factory.path_group()
 	path_group.explore(find=correct, avoid=wrong)
 
-	# embed()
 	print path_group.found[0].state.posix.dumps(1) 
 	return path_group.found[0].state.posix.dumps(0) # .lstrip('+0').rstrip('B')
 
