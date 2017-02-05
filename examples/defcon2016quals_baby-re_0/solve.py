@@ -7,20 +7,33 @@ Challenge: baby-re
 Team: hack.carleton
 Write-up: http://hack.carleton.team/2016/05/21/defcon-ctf-qualifier-2016-baby-re/
 Runtime: ~8 minutes (single threaded E5-2650L v3 @ 1.80GHz on DigitalOcean)
-
-DigitalOcean is horrible for single threaded applications, I would highly suggest using something else.
 """
 
 import angr
 
 def main():
 	proj = angr.Project('./baby-re',  load_options={'auto_load_libs': False})
+	
+	# This is going to check the current path's stdout and see if it contains the string "flag".
+	def correcter(path):
+		try:
+			return 'flag' in path.state.posix.dumps(1)  # If we found the flag, return true.
+		except:
+			return False  # If the string isn't in stdout, then we haven't found the solution yet.
+	
+	def avoider(path):
+		try:
+			return 'Wrong' in path.state.posix.dumps(1)  # If we see the string "Wrong", then it's definitely wrong.
+		except:
+			return False
 
-	path_group = proj.factory.path_group(threads=4) # Doesn't really help to have more threads, but whatever.
+	
+	path_group = proj.factory.path_group(veritesting=True)
 
-	# If we get to 0x402941, "Wrong" is going to be printed out, so definitely avoid that.
-	path_group.explore(find=0x40294b, avoid=0x402941) 
-	# If you use anywhere before 0x40292c, angr won't have the flag to print out yet. So don't do that.
+	meth = angr.exploration_techniques.Director()
+	path_group.use_technique(meth)
+	
+	path_group.explore(find=0x40294b, avoid=avoider)
 
 	return path_group.found[0].state.posix.dumps(1) # The flag is at the end.
 
